@@ -1,0 +1,16 @@
+# Code Owners
+# https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner
+* @tepeiya
+
+# Backend
+/backend/ @tepeiya
+
+# Frontend
+/frontend/ @tepeiya
+
+# CI / Docs
+/.github/ @tepeiya
+/README.md @tepeiya
+/PLAN.md @tepeiya

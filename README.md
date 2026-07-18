@@ -1,8 +1,34 @@
-# AutoTalk Studio
+<div align="center">
 
-一个把多个开源项目优点集成到一起的 **AI 数字人口播视频自动生产系统**。
+<h1>AutoTalk Studio</h1>
 
-> 一句话主题 → AI 生成台词 → 声音克隆 → 数字人口播 → 自动换背景/BGM → 批量出片 → 多平台发布
+<p align="center">
+  <strong>AI 数字人口播视频自动生产系统</strong><br>
+  一句话主题 → AI 生成台词 → 声音克隆 → 数字人口播 → 自动换背景/BGM → 批量出片 → 多平台发布
+</p>
+
+<p align="center">
+  <a href="https://github.com/tepeiya/autotalk-studio/actions"><img alt="CI" src="https://github.com/tepeiya/autotalk-studio/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/tepeiya/autotalk-studio"><img alt="Stars" src="https://img.shields.io/github/stars/tepeiya/autotalk-studio?style=social"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/tepeiya/autotalk-studio"></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-blue">
+  <img alt="Vue" src="https://img.shields.io/badge/vue-3.4-42b883">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-009688">
+  <img alt="Status" src="https://img.shields.io/badge/status-WIP-orange">
+</p>
+
+<p align="center">
+  <a href="#快速开始">快速开始</a> ·
+  <a href="#集成来源">集成来源</a> ·
+  <a href="#系统架构">架构</a> ·
+  <a href="#provider-扩展">Provider 扩展</a> ·
+  <a href="#路线图">路线图</a> ·
+  <a href="PLAN.md">设计文档</a>
+</p>
+
+</div>
+
+---
 
 ## 集成来源
 
@@ -166,6 +192,29 @@ class MyTTSProvider(BaseTTSProvider):
 - [ ] ASR 粗剪 / AI 转场（参考 FireRed-OpenStoryline）
 - [ ] HTML 模板渲染系统（参考 Pixelle-Video templates/）
 
+## 贡献
+
+欢迎提交 Issue 和 PR：
+
+- Bug 报告 / 功能建议：[提 Issue](https://github.com/tepeiya/autotalk-studio/issues/new/choose)
+- 代码贡献：fork → 分支 → PR，CI 通过即可合并
+- 新增 Provider：参考 [Provider 扩展](#provider-扩展)，无需改动其他代码
+
+贡献者请遵守 [MIT License](LICENSE)，提交即视为同意以同样协议开源。
+
+## 相关项目
+
+本系统借鉴了以下优秀开源项目，特此致谢：
+
+- [Pixelle-Video](https://github.com/AIDC-Ai/Pixelle-Video) - ComfyUI 模块化架构 + 数字人口播
+- [LuoGen-agent](https://github.com/LuoGen-AI/LuoGen-agent) - 商业级批量生产 + 多平台发布
+- [FireRed-OpenStoryline](https://github.com/FireRedTeam/FireRed-OpenStoryline) - 对话式剪辑 + ASR 粗剪
+- [MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo) - 主题 → 成片全自动化
+- [Linly-Dubbing](https://github.com/Kedreamix/Linly-Dubbing) - 多语言配音 + 口型同步
+- [AigcPanel](https://github.com/modstart-lib/aigcpanel) - 桌面端数字人系统
+- [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) / [CosyVoice](https://github.com/FunAudioLLM/CosyVoice) / [IndexTTS](https://github.com/index-tts/index-tts) - 声音克隆
+- [MuseTalk](https://github.com/TMElyralab/MuseTalk) / [Wav2Lip](https://github.com/Rudrabha/Wav2Lip) - 口型同步
+
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 tepeiya
