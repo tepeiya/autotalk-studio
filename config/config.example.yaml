@@ -1,0 +1,46 @@
+# AutoTalk Studio 主配置文件
+# 复制为 config.yaml 并按需修改。
+# 环境变量（.env）优先级高于本文件。
+
+host: 0.0.0.0
+port: 8000
+cors_origins: http://localhost:5173,http://127.0.0.1:5173
+storage_root: ./storage
+
+llm:
+  default_provider: openai     # openai / ollama / qwen
+  openai_api_key: ""
+  openai_base_url: https://api.openai.com/v1
+  openai_model: gpt-4o-mini
+  ollama_base_url: http://127.0.0.1:11434/v1
+  ollama_model: qwen2.5:7b
+  qwen_base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  qwen_api_key: ""
+  qwen_model: qwen-max
+
+tts:
+  default_provider: edge       # edge / cosyvoice / gptsovits / indextts
+  edge_voice: zh-CN-XiaoxiaoNeural
+  cosyvoice_base_url: http://127.0.0.1:9880
+  gptsovits_base_url: http://127.0.0.1:9880
+  indextts_base_url: http://127.0.0.1:8000
+
+avatar:
+  default_provider: musetalk    # musetalk / wav2lip / heygem
+  musetalk_base_url: http://127.0.0.1:8080
+  wav2lip_base_url: http://127.0.0.1:8081
+  heygem_base_url: http://127.0.0.1:8082
+
+media:
+  bgm_dir: storage/bgm
+  background_dir: storage/backgrounds
+  default_bgm_mode: random       # random / specified / none
+  default_bg_mode: template     # template / specified / none
+
+publisher:
+  default_provider: dummy       # dummy / (待接入真实平台)
+
+pipeline:
+  max_concurrent_shots: 4       # 单个 Project 内分镜并行数
+  shot_parallel: true
+  output_resolution: 1080x1920  # 竖屏 9:16
