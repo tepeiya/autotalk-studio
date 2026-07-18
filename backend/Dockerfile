@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # 系统依赖：ffmpeg
 RUN apt-get update && apt-get install -y --no-install-recommends \
