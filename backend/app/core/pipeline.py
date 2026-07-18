@@ -180,16 +180,40 @@ class Pipeline:
 
             # 5) 发布（可选）
             if p.auto_publish and p.publish_platforms:
-                self._emit("publish", TaskStatus.RUNNING, 0.0, "开始发布")
-                # MVP：暂用 dummy publisher
+                self._emit("publish", TaskStatus.RUNNING, 0.0, f"开始发布到 {len(p.publish_platforms)} 个平台")
                 from ..providers.base import registry as preg
-                publisher = preg.create("publisher", "dummy")
+                from ..providers.publisher.social_auto_upload_provider import PLATFORM_MAP
+                import os as _os
+                sau_path = _os.environ.get("SOCIAL_AUTO_UPLOAD_PATH", "/workspace/social-auto-upload")
                 for plat in p.publish_platforms:
-                    await publisher.publish(
-                        video_path=final,
-                        title=script.title,
-                        tags=script.tags,
-                    )
+                    # 平台路由：dummy 走 dummy；其他都走 social_auto_upload
+                    if plat == "dummy":
+                        publisher = preg.create("publisher", "dummy")
+                        await publisher.publish(
+                            video_path=final,
+                            title=script.title,
+                            tags=script.tags,
+                        )
+                    elif plat in PLATFORM_MAP:
+                        publisher = preg.create_fresh(
+                            "publisher", "social_auto_upload",
+                            project_path=sau_path,
+                        )
+                        try:
+                            await publisher.publish(
+                                video_path=final,
+                                title=script.title,
+                                tags=script.tags,
+                                platform=plat,
+                            )
+                        except FileNotFoundError as e:
+                            # 真实平台未配置 → 记录但不中断 pipeline
+                            logger.warning("Publish to %s skipped: %s", plat, e)
+                            self._emit("publish", TaskStatus.RUNNING, 0.5, f"{plat} 跳过：{e}")
+                            continue
+                    else:
+                        logger.warning("Unknown publish platform: %s", plat)
+                        continue
                 self._advance("publish", 1.0, "发布完成")
 
             p.status = TaskStatus.SUCCESS

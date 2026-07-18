@@ -9,6 +9,7 @@ import {
   List,
   Setting,
   HomeFilled,
+  Promotion,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -21,6 +22,7 @@ const menus = [
   { index: '/avatars', label: 'Avatar Studio', icon: Avatar },
   { index: '/media', label: 'Media Library', icon: Picture },
   { index: '/tasks', label: 'Batch Tasks', icon: List },
+  { index: '/publish', label: 'Publisher', icon: Promotion },
   { index: '/settings', label: 'Settings', icon: Setting },
 ]
 </script>

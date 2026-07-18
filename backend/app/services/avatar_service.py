@@ -88,6 +88,8 @@ class AvatarService:
             return registry.create("avatar", "wav2lip", base_url=cfg.wav2lip_base_url)
         if name == "heygem":
             return registry.create("avatar", "heygem", base_url=cfg.heygem_base_url)
+        if name == "mock":
+            return registry.create("avatar", "mock")
         raise ValueError(f"Unknown avatar provider: {name}")
 
 

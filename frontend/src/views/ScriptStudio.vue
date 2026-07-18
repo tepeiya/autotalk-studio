@@ -28,6 +28,7 @@ const form = reactive<ProjectCreatePayload>({
   llm_provider: '',
   tts_provider: '',
   auto_publish: false,
+  publish_platforms: [],
 })
 
 const rules: FormRules = {
@@ -57,6 +58,14 @@ const orientationOptions = [
   { label: 'Square 1:1', value: 'square' },
 ]
 
+const platformOptions = [
+  { label: '抖音 (Douyin)', value: 'douyin' },
+  { label: 'B 站 (Bilibili)', value: 'bilibili' },
+  { label: '快手 (Kuaishou)', value: 'kuaishou' },
+  { label: '小红书 (Xiaohongshu)', value: 'xiaohongshu' },
+  { label: 'YouTube', value: 'youtube' },
+]
+
 async function loadProviders() {
   try {
     const list = await providersApi.listProviders()
@@ -80,6 +89,7 @@ async function onSubmit() {
         llm_provider: form.llm_provider || null,
         tts_provider: form.tts_provider || null,
         reference_text: form.reference_text || null,
+        publish_platforms: form.auto_publish ? form.publish_platforms : [],
       }
       const project = await projectStore.createProject(payload)
       ElMessage.success(`Project created: ${project.id}`)
@@ -217,6 +227,23 @@ onMounted(loadProviders)
 
         <el-form-item label="Auto Publish">
           <el-switch v-model="form.auto_publish" />
+          <span class="form-hint">开启后 pipeline 跑完自动发布到所选平台</span>
+        </el-form-item>
+
+        <el-form-item v-if="form.auto_publish" label="Publish Platforms">
+          <el-select
+            v-model="form.publish_platforms"
+            multiple
+            placeholder="选择要发布的平台"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="opt in platformOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
         </el-form-item>
 
         <el-form-item>
@@ -229,3 +256,11 @@ onMounted(loadProviders)
     </el-card>
   </div>
 </template>
+
+<style scoped>
+.form-hint {
+  margin-left: 12px;
+  color: #909399;
+  font-size: 12px;
+}
+</style>

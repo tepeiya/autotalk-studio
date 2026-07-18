@@ -93,6 +93,8 @@ class VoiceService:
             return registry.create("tts", "gptsovits", base_url=cfg.gptsovits_base_url)
         if name == "indextts":
             return registry.create("tts", "indextts", base_url=cfg.indextts_base_url)
+        if name == "mock":
+            return registry.create("tts", "mock")
         raise ValueError(f"Unknown TTS provider: {name}")
 
 

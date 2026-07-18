@@ -38,6 +38,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Batch Tasks' },
   },
   {
+    path: '/publish',
+    name: 'Publisher',
+    component: () => import('@/views/Publisher.vue'),
+    meta: { title: 'Publisher' },
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),

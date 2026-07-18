@@ -78,6 +78,11 @@ class ProviderRegistry:
             self._instances[cache_key] = cls(**kwargs)
         return self._instances[cache_key]
 
+    def create_fresh(self, type_: str, name: str, **kwargs: Any) -> BaseProvider:
+        """每次创建新实例（用于需要传入运行时参数的 provider）。"""
+        cls = self.get_class(type_, name)
+        return cls(**kwargs)
+
 
 # 全局注册中心实例
 registry = ProviderRegistry()

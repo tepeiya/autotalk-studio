@@ -3,5 +3,6 @@ from . import base  # noqa: F401
 from . import openai_provider  # noqa: F401
 from . import ollama_provider  # noqa: F401
 from . import qwen_provider  # noqa: F401
+from . import mock_provider  # noqa: F401
 
-__all__ = ["base", "openai_provider", "ollama_provider", "qwen_provider"]
+__all__ = ["base", "openai_provider", "ollama_provider", "qwen_provider", "mock_provider"]

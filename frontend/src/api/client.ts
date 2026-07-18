@@ -121,6 +121,52 @@ export interface PublishResult {
   [key: string]: any
 }
 
+export interface PublisherPlatform {
+  name: string
+  requires_gpu?: boolean
+  class?: string
+  config_schema?: Record<string, any>
+}
+
+export interface GeneratedVideo {
+  id: string
+  filename: string
+  path: string
+  url: string
+  size_bytes: number
+  modified_at: number
+}
+
+export interface PublishedVideo {
+  id: string
+  filename: string
+  path: string
+  url: string
+  size_bytes: number
+  modified_at: number
+  platform: string
+}
+
+export interface CookieEntry {
+  platform: string
+  account: string
+  path: string
+  size_bytes: number
+  modified_at: number
+}
+
+export interface CookieStatus {
+  sau_path: string
+  cookies: CookieEntry[]
+  hint?: string
+}
+
+export interface SupportedPlatforms {
+  sau_installed: boolean
+  sau_project_path: string
+  platforms: Array<{ name: string; sau_name: string; display: string }>
+}
+
 // ────────────────────────────────
 // Projects
 // ────────────────────────────────
@@ -238,10 +284,35 @@ export const media = {
 // ────────────────────────────────
 
 export const publishers = {
+  listPlatforms() {
+    return client.get<PublisherPlatform[]>('/publishers/platforms').then((r) => r.data)
+  },
+  listSupportedPlatforms() {
+    return client.get<SupportedPlatforms>('/publishers/supported-platforms').then((r) => r.data)
+  },
+  listVideos() {
+    return client.get<GeneratedVideo[]>('/publishers/videos').then((r) => r.data)
+  },
+  listPublished() {
+    return client.get<PublishedVideo[]>('/publishers/published').then((r) => r.data)
+  },
+  listCookies() {
+    return client.get<CookieStatus>('/publishers/cookies').then((r) => r.data)
+  },
+  triggerLogin(formData: FormData) {
+    return client
+      .post<{ platform: string; account: string; status: string; hint?: string; cmd?: string }>(
+        '/publishers/login',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 30000 }
+      )
+      .then((r) => r.data)
+  },
   publish(formData: FormData) {
     return client
       .post<PublishResult>('/publishers/publish', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600000, // 真实上传可能耗时较长
       })
       .then((r) => r.data)
   },

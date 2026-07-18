@@ -42,6 +42,8 @@ class ScriptService:
                 base_url=llm_cfg.qwen_base_url,
                 model=llm_cfg.qwen_model,
             )
+        if name == "mock":
+            return registry.create("llm", "mock")
         raise ValueError(f"Unknown LLM provider: {name}")
 
 
