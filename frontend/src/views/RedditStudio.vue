@@ -48,6 +48,16 @@ const defaultForm = () => ({
   generate_video: false,
   publish_to_xiaohongshu: false,
   xiaohongshu_account: 'default',
+  // 爆款筛选阈值
+  min_score: 1000,
+  min_comments: 50,
+  min_title_length: 10,
+  max_selftext_length: 5000,
+  exclude_nsfw: true,
+  exclude_stickied: true,
+  // LLM 爆款评分
+  use_llm_viral_filter: false,
+  min_xhs_potential_score: 7,
 })
 const form = ref(defaultForm())
 
@@ -73,6 +83,13 @@ const statusTypeMap: Record<string, string> = {
 
 function statusType(s: string): string {
   return statusTypeMap[s] || 'info'
+}
+
+function viralScoreType(score: number): string {
+  if (score >= 9) return 'success'  // 极易爆
+  if (score >= 7) return 'success'  // 高潜力
+  if (score >= 5) return 'warning'  // 中等
+  return 'info'                      // 低
 }
 
 const stageLabel: Record<string, string> = {
@@ -387,6 +404,62 @@ watch(selectedTask, (t) => {
           </el-col>
         </el-row>
 
+        <!-- 爆款筛选 -->
+        <el-divider content-position="left">
+          <span class="divider-title">🔥 爆款筛选</span>
+        </el-divider>
+        <el-row :gutter="16">
+          <el-col :span="4">
+            <el-form-item label="最低点赞">
+              <el-input-number v-model="form.min_score" :min="0" :step="100" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="最低评论">
+              <el-input-number v-model="form.min_comments" :min="0" :step="10" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="标题最短">
+              <el-input-number v-model="form.min_title_length" :min="0" :max="300" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="正文最长">
+              <el-input-number v-model="form.max_selftext_length" :min="100" :step="500" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="排除 NSFW">
+              <el-switch v-model="form.exclude_nsfw" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="4">
+            <el-form-item label="排除置顶">
+              <el-switch v-model="form.exclude_stickied" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="16">
+          <el-col :span="6">
+            <el-form-item label="LLM 评分">
+              <el-switch v-model="form.use_llm_viral_filter" />
+              <small class="hint-text">启用后 LLM 评估 1-10 分爆款潜力</small>
+            </el-form-item>
+          </el-col>
+          <el-col :span="6">
+            <el-form-item label="最低潜力分">
+              <el-input-number
+                v-model="form.min_xhs_potential_score"
+                :min="0"
+                :max="10"
+                :disabled="!form.use_llm_viral_filter"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+
         <el-row>
           <el-col :span="24" style="text-align: right">
             <el-button :icon="Search" @click="previewCollect">采集预览</el-button>
@@ -450,6 +523,19 @@ watch(selectedTask, (t) => {
             <el-tag size="small" type="info">图 {{ row.images?.length || 0 }}</el-tag>
             <el-tag size="small" type="info">笔 {{ row.notes?.length || 0 }}</el-tag>
             <el-tag size="small" type="info">视 {{ row.videos?.length || 0 }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="筛选参数" width="200">
+          <template #default="{ row }">
+            <el-tag v-if="row.params?.min_score > 0" size="small" type="warning" effect="plain">
+              ≥{{ row.params.min_score }} 赞
+            </el-tag>
+            <el-tag v-if="row.params?.use_llm_viral_filter" size="small" type="success" effect="plain">
+              LLM ≥{{ row.params.min_xhs_potential_score }}
+            </el-tag>
+            <span v-if="!row.params?.min_score && !row.params?.use_llm_viral_filter" class="muted-text">
+              无阈值
+            </span>
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="180" />
@@ -545,6 +631,25 @@ watch(selectedTask, (t) => {
                 </el-descriptions-item>
                 <el-descriptions-item label="标签">
                   <el-tag v-for="(tag, i) in t.tags" :key="i" size="small" type="success" effect="plain" class="tag">#{{ tag }}</el-tag>
+                </el-descriptions-item>
+                <el-descriptions-item label="爆款潜力">
+                  <el-tag
+                    v-if="t.xhs_potential_score !== undefined && t.xhs_potential_score > 0"
+                    :type="viralScoreType(t.xhs_potential_score)"
+                    size="small"
+                  >
+                    {{ t.xhs_potential_score }}/10
+                  </el-tag>
+                  <el-tag v-else size="small" type="info">未评分</el-tag>
+                  <el-tag
+                    v-if="t.is_xhs_friendly === false"
+                    size="small"
+                    type="danger"
+                    effect="plain"
+                  >
+                    ⚠️ 不适合发小红书
+                  </el-tag>
+                  <span v-if="t.viral_reason" class="viral-reason">{{ t.viral_reason }}</span>
                 </el-descriptions-item>
               </el-descriptions>
             </template>
@@ -721,5 +826,27 @@ watch(selectedTask, (t) => {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.divider-title {
+  font-weight: 600;
+  color: var(--el-color-warning);
+}
+
+.hint-text {
+  margin-left: 8px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.muted-text {
+  color: #c0c4cc;
+  font-size: 12px;
+}
+
+.viral-reason {
+  margin-left: 8px;
+  color: #606266;
+  font-size: 12px;
 }
 </style>

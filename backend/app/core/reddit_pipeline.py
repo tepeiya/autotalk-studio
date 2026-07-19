@@ -34,6 +34,35 @@ logger = logging.getLogger(__name__)
 ProgressCallback = Callable[[RedditTaskEvent], None]
 
 
+def _filter_viral(posts: list[RedditHotPost], params: RedditTaskCreate) -> list[RedditHotPost]:
+    """采集后爆款阈值筛选。
+
+    支持的维度：
+    - min_score: 最低点赞数
+    - min_comments: 最低评论数
+    - min_title_length: 标题最短字符数
+    - max_selftext_length: 正文最长字符数（超出认为不适合搬运）
+    - exclude_nsfw: 排除 NSFW（over_18）
+    - exclude_stickied: 排除版主置顶
+    """
+    result: list[RedditHotPost] = []
+    for p in posts:
+        if params.min_score > 0 and p.score < params.min_score:
+            continue
+        if params.min_comments > 0 and p.num_comments < params.min_comments:
+            continue
+        if params.min_title_length > 0 and len(p.title) < params.min_title_length:
+            continue
+        if params.max_selftext_length > 0 and len(p.selftext or "") > params.max_selftext_length:
+            continue
+        if params.exclude_nsfw and getattr(p, "over_18", False):
+            continue
+        if params.exclude_stickied and getattr(p, "stickied", False):
+            continue
+        result.append(p)
+    return result
+
+
 class RedditPipeline:
     """Reddit 业务线 Pipeline。"""
 
@@ -87,8 +116,26 @@ class RedditPipeline:
                 time_filter=params.time_filter,
             )
             self.task.posts = [RedditHotPost(**p) for p in raw_posts]
-            self._emit("collect", RedditTaskStatus.COLLECTING, 0.15,
+            self._emit("collect", RedditTaskStatus.COLLECTING, 0.10,
                        f"采集到 {len(self.task.posts)} 篇热帖", None)
+
+            # ── Stage 1.5: 数值筛选（爆款阈值） ────────
+            before_count = len(self.task.posts)
+            self.task.posts = _filter_viral(self.task.posts, params)
+            filtered_out = before_count - len(self.task.posts)
+            if filtered_out > 0:
+                self._emit("collect", RedditTaskStatus.COLLECTING, 0.15,
+                           f"爆款筛选：保留 {len(self.task.posts)} 篇，"
+                           f"过滤 {filtered_out} 篇（min_score={params.min_score}, "
+                           f"min_comments={params.min_comments}）", None)
+            else:
+                self._emit("collect", RedditTaskStatus.COLLECTING, 0.15,
+                           f"采集 {len(self.task.posts)} 篇（无阈值过滤）", None)
+
+            if not self.task.posts:
+                self._emit("done", RedditTaskStatus.SUCCESS, 1.0,
+                           "筛选后无帖子可处理，任务结束")
+                return
 
             # ── Stage 2: 翻译 ───────────────────────
             self._emit("translate", RedditTaskStatus.TRANSLATING, 0.15, "开始翻译润色")
@@ -112,6 +159,9 @@ class RedditPipeline:
                     body_cn=out.get("body_cn", post.selftext),
                     key_points=out.get("key_points", []),
                     tags=out.get("tags", []),
+                    is_xhs_friendly=out.get("is_xhs_friendly", True),
+                    xhs_potential_score=int(out.get("xhs_potential_score", 0) or 0),
+                    viral_reason=out.get("viral_reason", ""),
                 )
                 translated.append(t)
                 # 持久化翻译结果
@@ -120,8 +170,30 @@ class RedditPipeline:
                 )
                 progress = 0.15 + 0.25 * (i + 1) / len(self.task.posts)
                 self._emit("translate", RedditTaskStatus.TRANSLATING, progress,
-                           f"翻译完成 [{i + 1}/{len(self.task.posts)}]", post.post_id)
+                           f"翻译完成 [{i + 1}/{len(self.task.posts)}] "
+                           f"（潜力分 {t.xhs_potential_score}/10）", post.post_id)
             self.task.translated = translated
+
+            # ── Stage 2.5: LLM 爆款评分过滤（可选）────
+            if params.use_llm_viral_filter and params.min_xhs_potential_score > 0:
+                before = len(self.task.translated)
+                self.task.translated = [
+                    t for t in self.task.translated
+                    if t.is_xhs_friendly
+                    and t.xhs_potential_score >= params.min_xhs_potential_score
+                ]
+                # 同步过滤 posts（保持一致）
+                kept_ids = {t.post_id for t in self.task.translated}
+                self.task.posts = [p for p in self.task.posts if p.post_id in kept_ids]
+                filtered = before - len(self.task.translated)
+                self._emit("translate", RedditTaskStatus.TRANSLATING, 0.40,
+                           f"LLM 爆款评分筛选：保留 {len(self.task.translated)} 篇 "
+                           f"（≥{params.min_xhs_potential_score}分），过滤 {filtered} 篇", None)
+
+                if not self.task.translated:
+                    self._emit("done", RedditTaskStatus.SUCCESS, 1.0,
+                               "LLM 筛选后无帖子可处理，任务结束")
+                    return
 
             # ── Stage 3: 生成产物 ─────────────────────
             self._emit("generate", RedditTaskStatus.GENERATING, 0.40, "开始生成图片/笔记")

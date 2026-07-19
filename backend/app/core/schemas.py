@@ -195,6 +195,8 @@ class RedditHotPost(BaseModel):
     url: str = ""
     permalink: str = ""
     created_utc: float = 0.0
+    over_18: bool = False  # NSFW
+    stickied: bool = False  # 版主置顶
     collected_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -208,6 +210,10 @@ class TranslatedPost(BaseModel):
     body_cn: str  # 完整润色正文
     key_points: list[str] = []  # 关键点提炼
     tags: list[str] = []  # 推荐标签
+    # 爆款潜力评分（LLM 评估，0 表示未评估）
+    is_xhs_friendly: bool = True  # 是否适合发小红书
+    xhs_potential_score: int = 0  # 1-10，越高越适合
+    viral_reason: str = ""  # 评分理由
 
 
 class RedditImageArtifact(BaseModel):
@@ -253,6 +259,16 @@ class RedditTaskCreate(BaseModel):
     generate_video: bool = False  # 视频较慢，默认不生成
     publish_to_xiaohongshu: bool = False
     xiaohongshu_account: str = "default"
+    # 爆款筛选阈值（采集后过滤）
+    min_score: int = Field(0, ge=0, description="最低点赞数，0 表示不过滤")
+    min_comments: int = Field(0, ge=0, description="最低评论数，0 表示不过滤")
+    min_title_length: int = Field(10, ge=0, description="标题最短字符数")
+    max_selftext_length: int = Field(5000, ge=100, description="正文最长字符数")
+    exclude_nsfw: bool = True  # 排除 NSFW
+    exclude_stickied: bool = True  # 排除版主置顶
+    # LLM 爆款评分过滤
+    use_llm_viral_filter: bool = False  # 启用 LLM 评分
+    min_xhs_potential_score: int = Field(0, ge=0, le=10, description="最低爆款潜力分，0 表示不过滤")
 
 
 class RedditTaskStatus(str, Enum):

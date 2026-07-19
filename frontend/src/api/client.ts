@@ -371,6 +371,8 @@ export interface RedditHotPost {
   url: string
   permalink: string
   created_utc: number
+  over_18?: boolean
+  stickied?: boolean
   collected_at?: string
 }
 
@@ -383,6 +385,9 @@ export interface TranslatedPost {
   body_cn: string
   key_points: string[]
   tags: string[]
+  is_xhs_friendly?: boolean
+  xhs_potential_score?: number
+  viral_reason?: string
 }
 
 export interface RedditImageArtifact {
@@ -424,6 +429,16 @@ export interface RedditTaskCreatePayload {
   generate_video?: boolean
   publish_to_xiaohongshu?: boolean
   xiaohongshu_account?: string
+  // 爆款筛选
+  min_score?: number
+  min_comments?: number
+  min_title_length?: number
+  max_selftext_length?: number
+  exclude_nsfw?: boolean
+  exclude_stickied?: boolean
+  // LLM 爆款评分
+  use_llm_viral_filter?: boolean
+  min_xhs_potential_score?: number
 }
 
 export interface RedditTask {

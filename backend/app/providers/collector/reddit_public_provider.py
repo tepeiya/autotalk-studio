@@ -131,6 +131,8 @@ class RedditPublicCollector(BaseCollectorProvider):
                     "url": d.get("url", "") or "",
                     "permalink": "https://www.reddit.com" + (d.get("permalink", "") or ""),
                     "created_utc": float(d.get("created_utc", 0.0) or 0.0),
+                    "over_18": bool(d.get("over_18", False)),
+                    "stickied": bool(d.get("stickied", False)),
                 })
             if not posts:
                 logger.info("Reddit returned empty, using mock")
