@@ -225,7 +225,7 @@ onMounted(loadAll)
       >
         {{ p.name }}
         <span class="platform-class">({{ p.class }})</span>
-        <span v-if="p.healthy === false" class="platform-class">⚠️ 未就绪</span>
+        <span v-if="(p as any).healthy === false" class="platform-class">⚠️ 未就绪</span>
       </el-tag>
     </el-card>
 

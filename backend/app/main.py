@@ -11,7 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from .config import get_settings
 from .core.storage import get_storage
 from .core.task_manager import task_manager
-from .api.routes import projects, tasks, voices, avatars, media, publishers
+from .core.reddit_task_manager import reddit_task_manager
+from .api.routes import projects, tasks, voices, avatars, media, publishers, reddit
 from .providers import registry  # noqa: F401  触发 Provider 注册
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -21,9 +22,11 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     task_manager.start()
-    logger.info("AutoTalk Studio backend started")
+    reddit_task_manager.start()
+    logger.info("AutoTalk Studio backend started (video + reddit pipelines)")
     yield
     task_manager.stop()
+    reddit_task_manager.stop()
     logger.info("AutoTalk Studio backend stopped")
 
 
@@ -55,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(avatars.router, prefix=api_prefix)
     app.include_router(media.router, prefix=api_prefix)
     app.include_router(publishers.router, prefix=api_prefix)
+    app.include_router(reddit.router, prefix=api_prefix)
 
     @app.get("/")
     async def root():

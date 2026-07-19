@@ -13,7 +13,8 @@ class Storage:
 
     def __init__(self, root: Path | None = None) -> None:
         self.root = root or get_settings().storage_path
-        for sub in ("voices", "avatars", "bgm", "backgrounds", "videos", "tasks", "tmp"):
+        for sub in ("voices", "avatars", "bgm", "backgrounds", "videos", "tasks", "tmp",
+                    "reddit", "reddit/posts", "reddit/images", "reddit/notes", "reddit/videos"):
             (self.root / sub).mkdir(parents=True, exist_ok=True)
 
     @property
@@ -43,6 +44,26 @@ class Storage:
     @property
     def tmp_dir(self) -> Path:
         return self.root / "tmp"
+
+    @property
+    def reddit_dir(self) -> Path:
+        return self.root / "reddit"
+
+    @property
+    def reddit_posts_dir(self) -> Path:
+        return self.reddit_dir / "posts"
+
+    @property
+    def reddit_images_dir(self) -> Path:
+        return self.reddit_dir / "images"
+
+    @property
+    def reddit_notes_dir(self) -> Path:
+        return self.reddit_dir / "notes"
+
+    @property
+    def reddit_videos_dir(self) -> Path:
+        return self.reddit_dir / "videos"
 
     def gen_id(self, prefix: str = "") -> str:
         ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")

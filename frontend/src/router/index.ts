@@ -44,6 +44,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Publisher' },
   },
   {
+    path: '/reddit',
+    name: 'RedditStudio',
+    component: () => import('@/views/RedditStudio.vue'),
+    meta: { title: 'Reddit Studio' },
+  },
+  {
     path: '/settings',
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),

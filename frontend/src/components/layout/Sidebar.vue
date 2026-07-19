@@ -10,6 +10,7 @@ import {
   Setting,
   HomeFilled,
   Promotion,
+  ChatLineRound,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -23,6 +24,7 @@ const menus = [
   { index: '/media', label: 'Media Library', icon: Picture },
   { index: '/tasks', label: 'Batch Tasks', icon: List },
   { index: '/publish', label: 'Publisher', icon: Promotion },
+  { index: '/reddit', label: 'Reddit Studio', icon: ChatLineRound },
   { index: '/settings', label: 'Settings', icon: Setting },
 ]
 </script>

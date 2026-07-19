@@ -346,4 +346,175 @@ export const settings = {
   },
 }
 
+// ────────────────────────────────
+// Reddit 业务线
+// ────────────────────────────────
+
+export type RedditTaskStatus =
+  | 'pending'
+  | 'collecting'
+  | 'translating'
+  | 'generating'
+  | 'publishing'
+  | 'success'
+  | 'failed'
+  | 'cancelled'
+
+export interface RedditHotPost {
+  post_id: string
+  title: string
+  selftext: string
+  subreddit: string
+  author: string
+  score: number
+  num_comments: number
+  url: string
+  permalink: string
+  created_utc: number
+  collected_at?: string
+}
+
+export interface TranslatedPost {
+  post_id: string
+  original_title: string
+  original_text: string
+  title_cn: string
+  summary_cn: string
+  body_cn: string
+  key_points: string[]
+  tags: string[]
+}
+
+export interface RedditImageArtifact {
+  post_id: string
+  image_path: string
+  url: string
+  prompt: string
+  width: number
+  height: number
+}
+
+export interface RedditNoteArtifact {
+  post_id: string
+  note_path: string
+  url: string
+  title: string
+  body: string
+  tags: string[]
+  image_paths: string[]
+}
+
+export interface RedditVideoArtifact {
+  post_id: string
+  video_path: string
+  url: string
+  script?: any
+}
+
+export interface RedditTaskCreatePayload {
+  subreddit?: string
+  limit?: number
+  time_filter?: string
+  collector?: string
+  translator?: string
+  image_provider?: string
+  note_provider?: string
+  generate_image?: boolean
+  generate_note?: boolean
+  generate_video?: boolean
+  publish_to_xiaohongshu?: boolean
+  xiaohongshu_account?: string
+}
+
+export interface RedditTask {
+  id: string
+  params: RedditTaskCreatePayload
+  status: RedditTaskStatus
+  progress: number
+  current_stage: string | null
+  posts: RedditHotPost[]
+  translated: TranslatedPost[]
+  images: RedditImageArtifact[]
+  notes: RedditNoteArtifact[]
+  videos: RedditVideoArtifact[]
+  error: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RedditTaskEvent {
+  task_id: string
+  stage: string
+  status: RedditTaskStatus
+  progress: number
+  message?: string | null
+  post_id?: string | null
+  timestamp: string
+}
+
+export interface RedditProvidersResponse {
+  collector: Array<{ name: string; class: string; requires_gpu: boolean }>
+  translator: Array<{ name: string; class: string; requires_gpu: boolean }>
+  image: Array<{ name: string; class: string; requires_gpu: boolean }>
+  note: Array<{ name: string; class: string; requires_gpu: boolean }>
+}
+
+export interface RedditNoteContent {
+  task_id: string
+  post_id: string
+  path: string
+  url: string
+  content: string
+}
+
+export interface RedditCollectResponse {
+  subreddit: string
+  count: number
+  posts: RedditHotPost[]
+}
+
+export interface RedditOkResponse {
+  ok: boolean
+  task_id?: string
+}
+
+export const reddit = {
+  listProviders() {
+    return client.get<RedditProvidersResponse>('/reddit/providers').then((r) => r.data)
+  },
+  collect(payload: { subreddit: string; limit?: number; time_filter?: string; collector?: string }) {
+    return client
+      .post<RedditCollectResponse>('/reddit/collect', payload)
+      .then((r) => r.data)
+  },
+  createTask(payload: RedditTaskCreatePayload) {
+    return client.post<RedditTask>('/reddit/tasks', payload).then((r) => r.data)
+  },
+  listTasks() {
+    return client.get<RedditTask[]>('/reddit/tasks').then((r) => r.data)
+  },
+  getTask(id: string) {
+    return client.get<RedditTask>(`/reddit/tasks/${id}`).then((r) => r.data)
+  },
+  cancelTask(id: string) {
+    return client
+      .post<RedditOkResponse>(`/reddit/tasks/${id}/cancel`)
+      .then((r) => r.data)
+  },
+  deleteTask(id: string) {
+    return client.delete<RedditOkResponse>(`/reddit/tasks/${id}`).then((r) => r.data)
+  },
+  listEvents(id: string) {
+    return client.get<RedditTaskEvent[]>(`/reddit/tasks/${id}/events`).then((r) => r.data)
+  },
+  streamEvents(id: string): EventSource {
+    return new EventSource(`/api/reddit/tasks/${id}/stream`)
+  },
+  getNote(taskId: string, postId: string) {
+    return client
+      .get<RedditNoteContent>(`/reddit/notes/${taskId}/${postId}`)
+      .then((r) => r.data)
+  },
+}
+
 export default client
