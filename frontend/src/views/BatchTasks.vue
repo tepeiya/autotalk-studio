@@ -357,4 +357,116 @@ async function onFilterChange() {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 12px 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 10px 12px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .flex-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .flex-row .el-select {
+    width: 100% !important;
+  }
+
+  .flex-row .el-button {
+    width: 100%;
+  }
+
+  .task-card {
+    margin-bottom: 10px;
+  }
+  .task-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .task-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .task-actions {
+    flex-wrap: wrap;
+  }
+
+  .task-actions .el-button {
+    flex: 1;
+    min-width: 45%;
+  }
+
+  .section-card :deep(.el-descriptions) {
+    font-size: 12px;
+  }
+  .section-card :deep(.el-descriptions__label) {
+    width: 80px !important;
+    font-size: 12px;
+    padding: 8px 6px !important;
+  }
+  .section-card :deep(.el-descriptions__body .el-descriptions__cell) {
+    padding: 8px 6px !important;
+  }
+
+  .event-stream {
+    max-height: 320px;
+    padding: 6px;
+  }
+
+  .event-row {
+    flex-wrap: wrap;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .event-time {
+    min-width: auto;
+    font-size: 11px;
+    flex-basis: 100%;
+  }
+
+  .event-progress {
+    min-width: auto;
+  }
+
+  .event-message {
+    flex-basis: 100%;
+    white-space: normal;
+    word-break: break-all;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+  .section-card :deep(.el-descriptions__label) {
+    width: 70px !important;
+    font-size: 11px;
+  }
+  .section-card :deep(.el-descriptions__body .el-descriptions__cell) {
+    font-size: 12px;
+  }
+}
 </style>

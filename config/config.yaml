@@ -1,0 +1,36 @@
+host: 0.0.0.0
+port: 8000
+cors_origins: http://localhost:5173,http://127.0.0.1:5173
+storage_root: /workspace/storage
+llm:
+  default_provider: openai
+  openai_api_key: ''
+  openai_base_url: https://api.openai.com/v1
+  openai_model: gpt-4o-mini
+  ollama_base_url: http://127.0.0.1:11434/v1
+  ollama_model: qwen2.5:7b
+  qwen_base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  qwen_api_key: ''
+  qwen_model: qwen-max
+tts:
+  default_provider: edge
+  edge_voice: zh-CN-XiaoxiaoNeural
+  cosyvoice_base_url: http://127.0.0.1:9880
+  gptsovits_base_url: http://127.0.0.1:9880
+  indextts_base_url: http://127.0.0.1:8000
+avatar:
+  default_provider: musetalk
+  musetalk_base_url: http://127.0.0.1:8080
+  wav2lip_base_url: http://127.0.0.1:8081
+  heygem_base_url: http://127.0.0.1:8082
+media:
+  bgm_dir: storage/bgm
+  background_dir: storage/backgrounds
+  default_bgm_mode: random
+  default_bg_mode: template
+publisher:
+  default_provider: dummy
+pipeline:
+  max_concurrent_shots: 4
+  shot_parallel: true
+  output_resolution: 1080x1920

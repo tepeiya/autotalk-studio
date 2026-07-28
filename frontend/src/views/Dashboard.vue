@@ -177,12 +177,13 @@ onMounted(() => {
 <style scoped>
 .provider-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 16px;
 }
 
 .provider-group {
   background-color: #fafbfc;
+  min-width: 0;
 }
 
 .group-title {
@@ -196,6 +197,7 @@ onMounted(() => {
   gap: 8px;
   padding: 6px 0;
   border-bottom: 1px dashed #ebeef5;
+  min-width: 0;
 }
 .provider-item:last-child {
   border-bottom: none;
@@ -204,6 +206,10 @@ onMounted(() => {
 .provider-name {
   flex: 1;
   color: #606266;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-card {
@@ -218,6 +224,9 @@ onMounted(() => {
 .project-name {
   font-weight: 600;
   color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-topic {
@@ -235,5 +244,39 @@ onMounted(() => {
   font-size: 12px;
   color: #909399;
   margin-top: 8px;
+  gap: 8px;
+}
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .provider-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .provider-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .provider-group :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .project-card {
+    margin-bottom: 10px;
+  }
+
+  .project-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .project-meta {
+    flex-direction: column;
+    gap: 4px;
+  }
 }
 </style>

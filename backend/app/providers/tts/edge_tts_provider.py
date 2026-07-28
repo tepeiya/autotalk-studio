@@ -30,6 +30,14 @@ _EDGE_VOICES = [
 class EdgeTTSProvider(BaseTTSProvider):
     name = "edge"
 
+    @classmethod
+    def _class_available(cls) -> bool:
+        try:
+            import edge_tts  # noqa: F401
+            return True
+        except Exception:
+            return False
+
     def __init__(self, voice: str = "zh-CN-XiaoxiaoNeural", **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.default_voice = voice

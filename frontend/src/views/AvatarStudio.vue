@@ -225,4 +225,74 @@ onMounted(() => {
   white-space: nowrap;
   max-width: 120px;
 }
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 12px 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 10px 12px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .avatar-card {
+    margin-bottom: 10px;
+  }
+  .avatar-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .avatar-meta {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .avatar-id {
+    max-width: 100%;
+  }
+
+  .section-card :deep(.el-form-item__label) {
+    font-size: 12px;
+    width: 90px !important;
+    padding-right: 6px !important;
+  }
+
+  .section-card :deep(.el-input),
+  .section-card :deep(.el-select) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-button) {
+    width: 100%;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+  .section-card :deep(.el-form-item__label) {
+    font-size: 11px;
+    width: 76px !important;
+  }
+  .avatar-name {
+    font-size: 13px;
+  }
+}
 </style>

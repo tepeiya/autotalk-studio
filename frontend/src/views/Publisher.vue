@@ -238,22 +238,24 @@ onMounted(loadAll)
         </div>
       </template>
       <el-empty v-if="!cookieStatus || cookieStatus.cookies.length === 0" :description="cookieStatus?.hint || '还没有登录账号'" />
-      <el-table v-else :data="cookieStatus.cookies" stripe>
-        <el-table-column label="平台" width="120">
-          <template #default="{ row }">
-            <el-tag size="small" type="success">{{ cookiePlatformTag(row.platform) }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="账号" prop="account" min-width="160" />
-        <el-table-column label="登录时间" width="180">
-          <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
-        </el-table-column>
-        <el-table-column label="路径" min-width="280">
-          <template #default="{ row }">
-            <code class="path-text">{{ row.path }}</code>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-else class="responsive-table-wrap">
+        <el-table :data="cookieStatus.cookies" stripe>
+          <el-table-column label="平台" width="120">
+            <template #default="{ row }">
+              <el-tag size="small" type="success">{{ cookiePlatformTag(row.platform) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="账号" prop="account" min-width="160" />
+          <el-table-column label="登录时间" width="180">
+            <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
+          </el-table-column>
+          <el-table-column label="路径" min-width="280">
+            <template #default="{ row }">
+              <code class="path-text">{{ row.path }}</code>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
 
     <!-- 已生成视频 -->
@@ -265,27 +267,29 @@ onMounted(loadAll)
         </div>
       </template>
       <el-empty v-if="videos.length === 0" description="还没有生成视频，去 Script Studio 创建一个项目吧" />
-      <el-table v-else :data="videos" stripe>
-        <el-table-column label="文件" min-width="220">
-          <template #default="{ row }">
-            <a :href="row.url" target="_blank" class="video-link">{{ row.filename }}</a>
-          </template>
-        </el-table-column>
-        <el-table-column label="大小" width="110">
-          <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
-        </el-table-column>
-        <el-table-column label="生成时间" width="180">
-          <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" type="primary" :icon="Promotion" @click="openPublishDialog(row)">
-              Publish
-            </el-button>
-            <el-button size="small" plain @click="copyPath(row.path)">Copy Path</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div v-else class="responsive-table-wrap">
+        <el-table :data="videos" stripe>
+          <el-table-column label="文件" min-width="220">
+            <template #default="{ row }">
+              <a :href="row.url" target="_blank" class="video-link">{{ row.filename }}</a>
+            </template>
+          </el-table-column>
+          <el-table-column label="大小" width="110">
+            <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
+          </el-table-column>
+          <el-table-column label="生成时间" width="180">
+            <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="220" fixed="right">
+            <template #default="{ row }">
+              <el-button size="small" type="primary" :icon="Promotion" @click="openPublishDialog(row)">
+                Publish
+              </el-button>
+              <el-button size="small" plain @click="copyPath(row.path)">Copy Path</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
 
     <!-- 已发布记录 -->
@@ -297,26 +301,28 @@ onMounted(loadAll)
         </div>
       </template>
       <el-empty v-if="published.length === 0" description="还没有发布记录" />
-      <el-table v-else :data="published" stripe>
-        <el-table-column label="文件" min-width="220">
-          <template #default="{ row }">
-            <a :href="row.url" target="_blank" class="video-link">{{ row.filename }}</a>
-          </template>
-        </el-table-column>
-        <el-table-column label="平台" width="100">
-          <template #default="{ row }">
-            <el-tag size="small" :type="row.platform === 'local' ? 'info' : 'success'">
-              {{ row.platform }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="大小" width="110">
-          <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
-        </el-table-column>
-        <el-table-column label="发布时间" width="180">
-          <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
-        </el-table-column>
-      </el-table>
+      <div v-else class="responsive-table-wrap">
+        <el-table :data="published" stripe>
+          <el-table-column label="文件" min-width="220">
+            <template #default="{ row }">
+              <a :href="row.url" target="_blank" class="video-link">{{ row.filename }}</a>
+            </template>
+          </el-table-column>
+          <el-table-column label="平台" width="100">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.platform === 'local' ? 'info' : 'success'">
+                {{ row.platform }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="大小" width="110">
+            <template #default="{ row }">{{ formatSize(row.size_bytes) }}</template>
+          </el-table-column>
+          <el-table-column label="发布时间" width="180">
+            <template #default="{ row }">{{ formatDate(row.modified_at) }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
 
     <!-- 发布对话框 -->
@@ -457,5 +463,96 @@ onMounted(loadAll)
 .flex-row {
   display: flex;
   gap: 8px;
+}
+
+.responsive-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-table-wrap .el-table {
+  min-width: 700px;
+}
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 12px 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 10px 12px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .flex-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .flex-row .el-button {
+    flex: 1;
+    min-width: 45%;
+  }
+
+  .platform-tag {
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .section-card :deep(.el-form-item__label) {
+    font-size: 12px;
+    width: 70px !important;
+    padding-right: 6px !important;
+  }
+
+  .section-card :deep(.el-input),
+  .section-card :deep(.el-select),
+  .section-card :deep(.el-textarea) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-textarea__inner) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-dialog__footer .el-button) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .section-card :deep(.el-dialog__footer) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+  .section-card :deep(.el-form-item__label) {
+    font-size: 11px;
+    width: 60px !important;
+  }
+  .path-text {
+    font-size: 11px;
+  }
 }
 </style>

@@ -1,6 +1,7 @@
 """应用配置：基于 Pydantic Settings，环境变量 + YAML 双源。"""
 from __future__ import annotations
 
+import copy
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -9,7 +10,7 @@ import yaml
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class LLMConfig(BaseModel):
@@ -114,6 +115,82 @@ class Settings(BaseSettings):
         p = Path(self.storage_root)
         p.mkdir(parents=True, exist_ok=True)
         return p
+
+    # ==========================================================
+    # Runtime save (persist to config/config.yaml)
+    # ==========================================================
+    SECTIONS: tuple[str, ...] = (
+        "llm", "tts", "avatar", "media", "publisher", "pipeline",
+    )
+    ROOT_KEYS: tuple[str, ...] = ("host", "port", "cors_origins", "storage_root")
+
+    def to_yaml_dict(self) -> dict[str, Any]:
+        """Serialize settings into a YAML-friendly plain dict."""
+        data: dict[str, Any] = {}
+        for k in self.ROOT_KEYS:
+            data[k] = getattr(self, k)
+        for s in self.SECTIONS:
+            obj = getattr(self, s)
+            data[s] = obj.model_dump(mode="json") if isinstance(obj, BaseModel) else obj
+        return data
+
+    @classmethod
+    def yaml_path(cls) -> Path:
+        return PROJECT_ROOT / "config" / "config.yaml"
+
+    def save_to_yaml(self, yaml_path: Path | None = None) -> Path:
+        """Persist current settings to config.yaml (human-friendly YAML)."""
+        path = yaml_path or self.yaml_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        data = self.to_yaml_dict()
+        with open(path, "w", encoding="utf-8") as f:
+            yaml.safe_dump(
+                data,
+                f,
+                allow_unicode=True,
+                default_flow_style=False,
+                sort_keys=False,
+            )
+        return path
+
+    def apply_patch(self, patch: dict[str, Any]) -> "Settings":
+        """Return a NEW Settings with the patch merged in (section by section)."""
+        # Start from a plain copy of the current state
+        current = self.to_yaml_dict()
+        merged = _deep_merge(copy.deepcopy(current), patch)
+
+        new_settings = Settings()  # environment variables are applied first
+        # Override env defaults with current merged values, then env still wins on overlaps
+        # But to keep deterministic behaviour, we build from merged and apply env overlaps.
+        # Simpler approach: build from merged YAML using _merge_yaml path.
+        new_settings = new_settings._merge_yaml(merged)
+        return new_settings
+
+
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Recursively merge override into base (override wins)."""
+    for k, v in override.items():
+        if (
+            k in base
+            and isinstance(base[k], dict)
+            and isinstance(v, dict)
+        ):
+            _deep_merge(base[k], v)
+        else:
+            base[k] = v
+    return base
+
+
+def reload_settings(new_settings: Settings | None = None) -> Settings:
+    """Replace cached settings instance and return the new one."""
+    get_settings.cache_clear()
+    if new_settings is not None:
+        # Inject into cache by calling get_settings won't work (it reloads from disk),
+        # so we save new_settings to YAML first so get_settings() reads it back.
+        new_settings.save_to_yaml()
+    loaded = Settings.load()
+    get_settings()
+    return loaded
 
 
 @lru_cache

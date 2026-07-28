@@ -330,12 +330,41 @@ export const providers = {
   },
 }
 
+export interface SettingsSnapshot {
+  host: string
+  port: number
+  cors_origins: string
+  storage_root: string
+  llm: Record<string, any>
+  tts: Record<string, any>
+  avatar: Record<string, any>
+  media: Record<string, any>
+  publisher: Record<string, any>
+  pipeline: Record<string, any>
+  yaml_path: string
+}
+
+export type SettingsPatch = Partial<Pick<SettingsSnapshot, 'host' | 'port' | 'cors_origins' | 'storage_root'>> & {
+  llm?: Record<string, any>
+  tts?: Record<string, any>
+  avatar?: Record<string, any>
+  media?: Record<string, any>
+  publisher?: Record<string, any>
+  pipeline?: Record<string, any>
+}
+
 // ────────────────────────────────
-// Settings（前端组装：基于 providers）
+// Settings（后端真实配置：GET + PATCH /api/settings）
 // ────────────────────────────────
 
 export const settings = {
-  async fetch() {
+  fetchSnapshot() {
+    return client.get<SettingsSnapshot>('/settings').then((r) => r.data)
+  },
+  updateSnapshot(patch: SettingsPatch) {
+    return client.patch<SettingsSnapshot>('/settings', patch).then((r) => r.data)
+  },
+  async fetchProviders() {
     const list = await providers.listProviders()
     const grouped: Record<string, ProviderInfo[]> = {}
     for (const p of list) {

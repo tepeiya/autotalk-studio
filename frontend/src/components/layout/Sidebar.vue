@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   Document,
   Microphone,
@@ -13,7 +13,12 @@ import {
   ChatLineRound,
 } from '@element-plus/icons-vue'
 
+const emit = defineEmits<{
+  (e: 'menu-click'): void
+}>()
+
 const route = useRoute()
+const router = useRouter()
 const activeIndex = computed(() => route.path)
 
 const menus = [
@@ -27,6 +32,13 @@ const menus = [
   { index: '/reddit', label: 'Reddit Studio', icon: ChatLineRound },
   { index: '/settings', label: 'Settings', icon: Setting },
 ]
+
+function handleMenuClick(index: string) {
+  if (index !== route.path) {
+    router.push(index)
+  }
+  emit('menu-click')
+}
 </script>
 
 <template>
@@ -37,11 +49,12 @@ const menus = [
     </div>
     <el-menu
       :default-active="activeIndex"
-      router
+      :collapse="false"
       class="sidebar-menu"
       background-color="#1f2d3d"
       text-color="#c0c4cc"
       active-text-color="#ffffff"
+      @select="handleMenuClick"
     >
       <el-menu-item
         v-for="m in menus"
@@ -49,7 +62,7 @@ const menus = [
         :index="m.index"
       >
         <el-icon><component :is="m.icon" /></el-icon>
-        <span>{{ m.label }}</span>
+        <span class="menu-label">{{ m.label }}</span>
       </el-menu-item>
     </el-menu>
   </aside>
@@ -62,10 +75,12 @@ const menus = [
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100%;
 }
 
 .sidebar-brand {
   height: 56px;
+  min-height: 56px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -89,9 +104,20 @@ const menus = [
 .sidebar-menu {
   border-right: none;
   flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-menu .el-menu-item {
+  height: 46px;
+  line-height: 46px;
 }
 
 .sidebar-menu .el-menu-item.is-active {
   background-color: #2c3e50;
+}
+
+.menu-label {
+  margin-left: 4px;
 }
 </style>

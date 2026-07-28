@@ -5,5 +5,6 @@ from . import voices  # noqa: F401
 from . import avatars  # noqa: F401
 from . import media  # noqa: F401
 from . import publishers  # noqa: F401
+from . import settings  # noqa: F401
 
-__all__ = ["projects", "tasks", "voices", "avatars", "media", "publishers"]
+__all__ = ["projects", "tasks", "voices", "avatars", "media", "publishers", "settings"]

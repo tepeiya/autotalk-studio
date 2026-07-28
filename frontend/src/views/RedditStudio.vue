@@ -460,10 +460,11 @@ watch(selectedTask, (t) => {
           </el-col>
         </el-row>
 
-        <el-row>
+        <el-row class="btn-row">
           <el-col :span="24" style="text-align: right">
-            <el-button :icon="Search" @click="previewCollect">采集预览</el-button>
+            <el-button class="btn-item" :icon="Search" @click="previewCollect">采集预览</el-button>
             <el-button
+              class="btn-item"
               type="primary"
               :icon="Promotion"
               :loading="submitting"
@@ -484,12 +485,13 @@ watch(selectedTask, (t) => {
           <el-button :icon="Refresh" size="small" link @click="loadTasks">刷新</el-button>
         </div>
       </template>
-      <el-table
-        :data="tasks"
-        v-loading="loading"
-        size="small"
-        @row-click="(row: RedditTask) => selectTask(row.id)"
-        highlight-current-row
+      <div class="tasks-table-wrap">
+        <el-table
+          :data="tasks"
+          v-loading="loading"
+          size="small"
+          @row-click="(row: RedditTask) => selectTask(row.id)"
+          highlight-current-row
         :row-class-name="({ row }) => (row.id === selectedTaskId ? 'is-selected' : '')"
       >
         <el-table-column prop="id" label="ID" width="180" />
@@ -558,7 +560,8 @@ watch(selectedTask, (t) => {
             >删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+        </el-table>
+      </div>
     </el-card>
 
     <!-- 任务详情 -->
@@ -848,5 +851,153 @@ watch(selectedTask, (t) => {
   margin-left: 8px;
   color: #606266;
   font-size: 12px;
+}
+
+/* ========== 响应式：表格可横向滚动 ========== */
+.tasks-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tasks-table-wrap .el-table {
+  min-width: 1000px;
+}
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .card-header {
+    flex-wrap: wrap;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .form-card :deep(.el-card__header) {
+    padding: 12px;
+  }
+  .form-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .card-header {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .form-card :deep(.el-form) {
+    padding: 0;
+  }
+
+  .form-card :deep(.el-form-item) {
+    margin-bottom: 12px;
+  }
+
+  .form-card :deep(.el-form-item__label) {
+    font-size: 12px;
+  }
+
+  .form-card :deep(.el-input),
+  .form-card :deep(.el-select),
+  .form-card :deep(.el-input-number),
+  .form-card :deep(.el-input__wrapper) {
+    width: 100% !important;
+  }
+
+  .form-card :deep(.el-col) {
+    margin-bottom: 0;
+  }
+
+  .btn-row .el-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left !important;
+  }
+
+  .btn-row .btn-item {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .divider-title {
+    font-size: 13px;
+  }
+
+  .hint-text {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .tabs-wrap {
+    padding: 0;
+  }
+
+  .tabs-wrap :deep(.el-tabs__header) {
+    margin: 0;
+  }
+
+  .tabs-wrap :deep(.el-tabs__nav) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .tabs-wrap :deep(.el-tabs__item) {
+    padding: 0 10px;
+    font-size: 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .detail-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .section-title {
+    margin: 12px 0 6px;
+    font-size: 13px;
+  }
+
+  .post-detail {
+    padding: 4px 0;
+  }
+
+  .events-list {
+    max-height: 200px;
+  }
+
+  .event-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .event-stage {
+    min-width: auto;
+  }
+
+  .image-grid {
+    gap: 8px;
+  }
+
+  .viral-reason {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .detail-card :deep(.el-descriptions) {
+    font-size: 12px;
+  }
+  .detail-card :deep(.el-descriptions__label) {
+    width: 90px !important;
+    font-size: 12px;
+  }
+  .body-cn {
+    font-size: 12px;
+  }
 }
 </style>

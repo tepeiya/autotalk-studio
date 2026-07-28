@@ -21,6 +21,20 @@ class BaseProvider(ABC):
     def __init__(self, **kwargs: Any) -> None:
         self.config: dict[str, Any] = kwargs
 
+    @classmethod
+    def _class_available(cls) -> bool:
+        """同步可用性检查（用于列表页快速展示）。
+
+        子类可覆盖：mock / media / 无需密钥的 provider 返回 True；
+        需要 API Key / GPU / 外部依赖的类应显式返回 False 或做实际检查。
+        """
+        if cls.name == "mock" or "Mock" in cls.__name__:
+            return True
+        if cls.type == "media":
+            return True
+        # 默认：未配置的真实 provider 视为不可用
+        return False
+
     @abstractmethod
     async def health_check(self) -> bool:
         """探测 Provider 是否可用。"""
@@ -35,6 +49,7 @@ class BaseProvider(ABC):
             "name": self.name,
             "type": self.type,
             "requires_gpu": self.requires_gpu,
+            "available": self._class_available(),
             "config_schema": self.get_config_schema(),
         }
 
@@ -57,10 +72,18 @@ class ProviderRegistry:
             ptype, pname = key.split(":", 1)
             if type_filter and ptype != type_filter:
                 continue
+            # 同步可用性判断：mock 类名 / name=mock / media 类型永远 True；
+            # 真实 provider 默认 False（需用户配 API Key 或 GPU），可通过 _class_available 覆盖。
+            try:
+                available = cls._class_available()
+            except Exception:
+                available = (pname == "mock" or "Mock" in cls.__name__ or ptype in ("media",))
             result.append({
                 "name": pname,
                 "type": ptype,
                 "requires_gpu": getattr(cls, "requires_gpu", False),
+                "available": available,
+                "config_schema": {},
                 "class": cls.__name__,
             })
         return result

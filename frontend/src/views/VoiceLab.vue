@@ -177,27 +177,29 @@ onMounted(() => {
           <el-button text :loading="loadingList" @click="loadVoices">Refresh</el-button>
         </div>
       </template>
-      <el-table :data="voiceList" v-loading="loadingList" stripe>
-        <el-table-column prop="name" label="Name" min-width="140" />
-        <el-table-column prop="provider" label="Provider" width="140" />
-        <el-table-column prop="id" label="ID" min-width="180" />
-        <el-table-column label="Sample" min-width="120">
-          <template #default="{ row }">
-            <audio
-              v-if="row.sample_path"
-              :src="`/static/${row.sample_path.split('/').pop()}`"
-              controls
-              style="height: 28px"
-            />
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="Created" min-width="160">
-          <template #default="{ row }">
-            {{ row.created_at ? new Date(row.created_at).toLocaleString() : '-' }}
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="responsive-table-wrap">
+        <el-table :data="voiceList" v-loading="loadingList" stripe>
+          <el-table-column prop="name" label="Name" min-width="140" />
+          <el-table-column prop="provider" label="Provider" width="140" />
+          <el-table-column prop="id" label="ID" min-width="180" />
+          <el-table-column label="Sample" min-width="120">
+            <template #default="{ row }">
+              <audio
+                v-if="row.sample_path"
+                :src="`/static/${row.sample_path.split('/').pop()}`"
+                controls
+                style="height: 28px"
+              />
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="Created" min-width="160">
+            <template #default="{ row }">
+              {{ row.created_at ? new Date(row.created_at).toLocaleString() : '-' }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </el-card>
 
     <el-card class="section-card" shadow="never">
@@ -255,5 +257,83 @@ onMounted(() => {
   color: #909399;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.responsive-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-table-wrap .el-table {
+  min-width: 700px;
+}
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 12px 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+  .section-card :deep(.el-card__header) {
+    padding: 10px 12px;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .section-card :deep(.el-form-item__label) {
+    font-size: 12px;
+    width: 90px !important;
+    padding-right: 6px !important;
+  }
+
+  .section-card :deep(.el-input),
+  .section-card :deep(.el-select),
+  .section-card :deep(.el-textarea) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-textarea__inner) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-form-item__content) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-button) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  audio {
+    width: 100%;
+    min-width: 140px;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+  .section-card :deep(.el-form-item__label) {
+    font-size: 11px;
+    width: 76px !important;
+  }
 }
 </style>

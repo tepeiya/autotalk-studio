@@ -263,4 +263,76 @@ onMounted(loadProviders)
   color: #909399;
   font-size: 12px;
 }
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .section-card :deep(.el-form) {
+    padding: 0;
+  }
+
+  .section-card :deep(.el-form-item) {
+    margin-bottom: 14px;
+  }
+
+  .section-card :deep(.el-form-item__label) {
+    font-size: 12px;
+    width: 90px !important;
+    padding-right: 6px !important;
+  }
+
+  .section-card :deep(.el-form-item__content) {
+    min-width: 0;
+  }
+
+  .section-card :deep(.el-input),
+  .section-card :deep(.el-select),
+  .section-card :deep(.el-input-number),
+  .section-card :deep(.el-textarea) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-textarea__inner) {
+    width: 100% !important;
+  }
+
+  .form-hint {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-form-item__content) {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-button) {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-form-item__label) {
+    font-size: 11px;
+    width: 76px !important;
+  }
+
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+}
 </style>

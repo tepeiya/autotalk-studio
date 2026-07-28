@@ -18,6 +18,10 @@ from ...core.storage import get_storage
 class DummyPublisher(BasePublisher):
     name = "dummy"
 
+    @classmethod
+    def _class_available(cls) -> bool:
+        return True  # 本地复制，无外部依赖
+
     async def publish(
         self,
         video_path: Path,

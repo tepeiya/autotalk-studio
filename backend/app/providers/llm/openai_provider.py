@@ -15,6 +15,11 @@ from ...core.schemas import ScriptRequest, ScriptResult
 class OpenAILLMProvider(BaseLLMProvider):
     name = "openai"
 
+    @classmethod
+    def _class_available(cls) -> bool:
+        import os
+        return bool(os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_BASE_URL"))
+
     def __init__(
         self,
         api_key: str = "",

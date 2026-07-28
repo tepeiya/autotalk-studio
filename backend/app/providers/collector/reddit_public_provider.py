@@ -93,6 +93,10 @@ class RedditPublicCollector(BaseCollectorProvider):
 
     name = "reddit_public"
 
+    @classmethod
+    def _class_available(cls) -> bool:
+        return True  # 公开端点，无需任何密钥
+
     def __init__(self, timeout: float = 15.0, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.timeout = timeout

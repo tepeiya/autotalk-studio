@@ -154,34 +154,36 @@ onMounted(() => {
             </el-form>
           </el-card>
 
-          <el-table :data="bgmList" v-loading="loadingBgm" stripe>
-            <el-table-column prop="name" label="Name" min-width="160" />
-            <el-table-column prop="id" label="ID" min-width="160" />
-            <el-table-column label="Preview" min-width="180">
-              <template #default="{ row }">
-                <audio
-                  v-if="mediaUrl(row)"
-                  :src="mediaUrl(row)"
-                  controls
-                  style="height: 28px"
-                />
-                <span v-else>-</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="Tags" min-width="120">
-              <template #default="{ row }">
-                <el-tag
-                  v-for="t in row.tags || []"
-                  :key="t"
-                  size="small"
-                  style="margin-right: 4px"
-                >
-                  {{ t }}
-                </el-tag>
-                <span v-if="!row.tags || row.tags.length === 0">-</span>
-              </template>
-            </el-table-column>
-          </el-table>
+          <div class="responsive-table-wrap">
+            <el-table :data="bgmList" v-loading="loadingBgm" stripe>
+              <el-table-column prop="name" label="Name" min-width="160" />
+              <el-table-column prop="id" label="ID" min-width="160" />
+              <el-table-column label="Preview" min-width="180">
+                <template #default="{ row }">
+                  <audio
+                    v-if="mediaUrl(row)"
+                    :src="mediaUrl(row)"
+                    controls
+                    style="height: 28px"
+                  />
+                  <span v-else>-</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="Tags" min-width="120">
+                <template #default="{ row }">
+                  <el-tag
+                    v-for="t in row.tags || []"
+                    :key="t"
+                    size="small"
+                    style="margin-right: 4px"
+                  >
+                    {{ t }}
+                  </el-tag>
+                  <span v-if="!row.tags || row.tags.length === 0">-</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </el-tab-pane>
 
         <el-tab-pane label="Backgrounds" name="backgrounds">
@@ -281,5 +283,89 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.responsive-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-table-wrap .el-table {
+  min-width: 700px;
+}
+
+/* ========== 平板 ≤1024px ========== */
+@media (max-width: 1024px) {
+  .section-card :deep(.el-card__body) {
+    padding: 14px;
+  }
+}
+
+/* ========== 手机 ≤768px ========== */
+@media (max-width: 768px) {
+  .section-card :deep(.el-card__body) {
+    padding: 12px;
+  }
+
+  .bg-card {
+    margin-bottom: 10px;
+  }
+  .bg-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+
+  .section-card :deep(.el-tabs__header) {
+    margin: 0;
+  }
+
+  .section-card :deep(.el-tabs__nav) {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .section-card :deep(.el-tabs__item) {
+    padding: 0 12px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .section-card :deep(.el-form-item__label) {
+    font-size: 12px;
+    width: 90px !important;
+    padding-right: 6px !important;
+  }
+
+  .section-card :deep(.el-input),
+  .section-card :deep(.el-upload) {
+    width: 100% !important;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-form-item__content) {
+    display: flex;
+  }
+
+  .section-card :deep(.el-form-item:last-child .el-button) {
+    width: 100%;
+  }
+
+  audio {
+    width: 100%;
+    min-width: 140px;
+  }
+}
+
+/* ========== 小屏手机 ≤480px ========== */
+@media (max-width: 480px) {
+  .section-card :deep(.el-card__body) {
+    padding: 10px;
+  }
+  .section-card :deep(.el-form-item__label) {
+    font-size: 11px;
+    width: 76px !important;
+  }
+  .bg-name {
+    font-size: 12px;
+  }
 }
 </style>
