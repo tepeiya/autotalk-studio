@@ -33,6 +33,11 @@ const statusTypeMap: Record<TaskStatus, 'info' | 'warning' | 'success' | 'danger
   success: 'success',
   failed: 'danger',
   cancelled: '',
+  // 新增：预览+审批 4 种新状态
+  previewing: 'warning',
+  previewed: 'info',
+  approved: 'success',
+  rejected: 'danger',
 }
 
 async function loadProviders() {

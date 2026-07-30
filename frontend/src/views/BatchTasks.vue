@@ -24,6 +24,10 @@ const statusOptions = [
   { label: 'Success', value: 'success' },
   { label: 'Failed', value: 'failed' },
   { label: 'Cancelled', value: 'cancelled' },
+  { label: '预览中', value: 'previewing' },
+  { label: '待审批', value: 'previewed' },
+  { label: '已批准', value: 'approved' },
+  { label: '已驳回', value: 'rejected' },
 ]
 
 const statusTypeMap: Record<TaskStatus, 'info' | 'warning' | 'success' | 'danger' | ''> = {
@@ -32,6 +36,10 @@ const statusTypeMap: Record<TaskStatus, 'info' | 'warning' | 'success' | 'danger
   success: 'success',
   failed: 'danger',
   cancelled: '',
+  previewing: 'warning',
+  previewed: 'info',
+  approved: 'success',
+  rejected: 'danger',
 }
 
 const filteredProjects = computed(() => projectStore.projects)

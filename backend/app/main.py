@@ -12,7 +12,10 @@ from .config import get_settings
 from .core.storage import get_storage
 from .core.task_manager import task_manager
 from .core.reddit_task_manager import reddit_task_manager
-from .api.routes import projects, tasks, voices, avatars, media, publishers, reddit, settings as settings_router
+from .api.routes import (
+    projects, tasks, voices, avatars, media, publishers, reddit,
+    settings as settings_router, projects_v2 as projects_v2_router,
+)
 from .providers import registry  # noqa: F401  触发 Provider 注册
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -53,6 +56,7 @@ def create_app() -> FastAPI:
     # 路由
     api_prefix = "/api"
     app.include_router(projects.router, prefix=api_prefix)
+    app.include_router(projects_v2_router.router, prefix=api_prefix)
     app.include_router(tasks.router, prefix=api_prefix)
     app.include_router(voices.router, prefix=api_prefix)
     app.include_router(avatars.router, prefix=api_prefix)

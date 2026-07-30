@@ -1,6 +1,10 @@
 """Task Manager - 批量任务调度 + 内存存储 + SSE 事件广播。
 
 借鉴 LuoGen-agent 的批量任务调度 + MoneyPrinterTurbo 的批量生成。
+
+新增（借鉴 Rachel Skill 预览审批流）：
+- run_preview() : 单独跑 15s 小样，结果写 preview_output_path，状态 PREVIEWED
+- submit_full() : 审批通过后，以 preview_mode=False 全量合成（不覆盖 preview）
 """
 from __future__ import annotations
 
@@ -39,8 +43,21 @@ class TaskManager:
     # ────────── 项目管理 ──────────
 
     def submit(self, project: Project) -> Project:
+        """原逻辑：提交一个"全量合成"项目，等价于 submit_full。保留此 API 兼容。"""
+        return self.submit_full(project)
+
+    def submit_full(self, project: Project) -> Project:
+        """审批通过后触发：以正常（全量）模式入队。"""
         self._projects[project.id] = project
-        self._queue.put_nowait(project.id)
+        # 入队标记 = (project_id, preview_mode=False) —— 用 tuple queue
+        self._queue.put_nowait((project.id, False))
+        self.start()
+        return project
+
+    def run_preview(self, project: Project) -> Project:
+        """立即/异步触发 preview_mode=True 的流水线。"""
+        self._projects[project.id] = project
+        self._queue.put_nowait((project.id, True))
         self.start()
         return project
 
@@ -75,8 +92,9 @@ class TaskManager:
             while True:
                 ev = await q.get()
                 yield ev
-                if ev.status in (TaskStatus.SUCCESS, TaskStatus.FAILED, TaskStatus.CANCELLED) \
-                        and ev.stage in ("done", "error"):
+                if ev.status in (TaskStatus.SUCCESS, TaskStatus.FAILED, TaskStatus.CANCELLED,
+                                 TaskStatus.REJECTED, TaskStatus.PREVIEWED) \
+                        and ev.stage in ("done", "error", "approval", "preview:done"):
                     break
         finally:
             self._subscribers[project_id].remove(q)
@@ -92,14 +110,20 @@ class TaskManager:
         """简单 worker：限制并发数。"""
         sem = asyncio.Semaphore(self.max_workers)
         while True:
-            project_id = await self._queue.get()
-            asyncio.create_task(self._run_with_sem(sem, project_id))
+            item = await self._queue.get()
+            # item: (project_id, preview_mode)，兼容老代码只塞 project_id str
+            if isinstance(item, tuple) and len(item) == 2:
+                project_id, preview_mode = item
+            else:
+                project_id, preview_mode = item, False
+            asyncio.create_task(self._run_with_sem(sem, project_id, preview_mode))
 
-    async def _run_with_sem(self, sem: asyncio.Semaphore, project_id: str) -> None:
+    async def _run_with_sem(self, sem: asyncio.Semaphore, project_id: str,
+                            preview_mode: bool) -> None:
         async with sem:
-            await self._run_project(project_id)
+            await self._run_project(project_id, preview_mode)
 
-    async def _run_project(self, project_id: str) -> None:
+    async def _run_project(self, project_id: str, preview_mode: bool = False) -> None:
         project = self._projects.get(project_id)
         if not project:
             return
@@ -107,7 +131,7 @@ class TaskManager:
         def on_event(ev: TaskEvent) -> None:
             self._publish(ev)
 
-        pipeline = Pipeline(project, on_event=on_event)
+        pipeline = Pipeline(project, on_event=on_event, preview_mode=preview_mode)
         task = asyncio.create_task(pipeline.run())
         self._running_tasks[project_id] = task
         try:

@@ -19,6 +19,11 @@ class TaskStatus(str, Enum):
     SUCCESS = "success"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    # 新增：预览 + 审批流（Rachel Skill 借鉴）
+    PREVIEWING = "previewing"   # 预览中（15 秒小样）
+    PREVIEWED = "previewed"     # 预览已生成，等待人工审批
+    APPROVED = "approved"       # 人工已批准，待/正在全量合成
+    REJECTED = "rejected"       # 人工驳回
 
 
 class VideoOrientation(str, Enum):
@@ -143,6 +148,13 @@ class ProjectCreate(BaseModel):
     auto_publish: bool = False
     publish_platforms: list[str] = []  # ["douyin", "bilibili", "kuaishou"]
 
+    # ────────── 新增（借鉴 Rachel Skill：预检 + 预览审批流 + 费用提示）──────────
+    # 这些字段全部默认关闭，保证旧代码完全不受影响
+    enable_preview_approval: bool = False  # 是否走预览→审批→全量，默认 False（原逻辑：直接全量）
+    preview_duration_sec: int = 15   # 预览小样时长，默认 15s
+    require_asset_preflight: bool = False  # 是否强制预检资产，默认 False（兼容）
+    require_cost_confirmation: bool = False  # 是否弹出费用确认，默认 False
+
 
 class Project(ProjectCreate):
     id: str
@@ -151,9 +163,63 @@ class Project(ProjectCreate):
     current_stage: str | None = None
     script: ScriptResult | None = None
     output_path: str | None = None
+    # 新增：预览输出路径（不影响 output_path 的现有语义）
+    preview_output_path: str | None = None
     error: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ────────────────────────────────
+# 新增：预检 / 费用估算 / 审批 相关 request & response
+#（借鉴 Rachel Skill preflight_assets.py）
+# ────────────────────────────────
+
+
+class PreflightIssue(BaseModel):
+    """预检发现的一个问题。"""
+    level: str  # "error" / "warning" / "info"
+    code: str   # 机器可读：MISSING_AVATAR / EMPTY_TOPIC / DURATION_TOO_LONG ...
+    message: str  # 人类可读（中文）
+    field: str | None = None  # 对应表单字段名，前端可标红
+
+
+class PreflightResult(BaseModel):
+    """资产预检报告。"""
+    passed: bool  # True 表示所有 error 项都没触发，可以直接运行
+    summary: str  # 一句话摘要（前端直接显示）
+    issues: list[PreflightIssue] = []
+    # 统计
+    error_count: int = 0
+    warning_count: int = 0
+    info_count: int = 0
+
+
+class CostEstimateItem(BaseModel):
+    provider: str  # llm-openai / tts-edge / avatar-musetalk / publisher-xiaohongshu ...
+    stage: str  # script / voice / avatar / media / video / publish
+    unit: str  # "tokens" / "seconds" / "requests" / "calls"
+    estimated_units: float
+    unit_cost_cny: float  # 估算单价（人民币，元）
+    estimated_cost_cny: float  # 预估此阶段花费
+    note: str | None = None  # 备注，如 "Mock/本地部署=0 元"
+
+
+class CostEstimateResult(BaseModel):
+    """费用估算结果。"""
+    items: list[CostEstimateItem] = []
+    total_cny: float = 0.0
+    currency: str = "CNY"
+    confidence: str = "rough"  # "exact" / "rough" / "unknown"
+    summary: str = ""  # 一句话摘要，如 "预估总花费 0.15 元，实际以服务商账单为准"
+
+
+class ProjectApproveRequest(BaseModel):
+    """审批请求。"""
+    approved: bool  # True=批准，False=驳回
+    reason: str | None = None  # 驳回理由/备注（可选）
+    # 批准时可选：全量合成时覆盖参数
+    override_duration_sec: int | None = None
 
 
 class TaskEvent(BaseModel):

@@ -24,6 +24,11 @@ export type TaskStatus =
   | 'success'
   | 'failed'
   | 'cancelled'
+  // 新增：预览 + 审批流
+  | 'previewing'
+  | 'previewed'
+  | 'approved'
+  | 'rejected'
 
 export interface ProviderInfo {
   name: string
@@ -31,6 +36,47 @@ export interface ProviderInfo {
   requires_gpu?: boolean
   available?: boolean
   config_schema?: Record<string, any>
+}
+
+// ────────────── 预检 / 费用 / 审批相关类型 ──────────────
+export interface PreflightIssue {
+  level: 'error' | 'warning' | 'info'
+  code: string
+  message: string
+  field?: string | null
+}
+
+export interface PreflightResult {
+  passed: boolean
+  summary: string
+  issues: PreflightIssue[]
+  error_count: number
+  warning_count: number
+  info_count: number
+}
+
+export interface CostEstimateItem {
+  provider: string
+  stage: string
+  unit: string
+  estimated_units: number
+  unit_cost_cny: number
+  estimated_cost_cny: number
+  note?: string | null
+}
+
+export interface CostEstimateResult {
+  items: CostEstimateItem[]
+  total_cny: number
+  currency: string
+  confidence: 'exact' | 'rough' | 'unknown'
+  summary: string
+}
+
+export interface ProjectApproveRequest {
+  approved: boolean
+  reason?: string | null
+  override_duration_sec?: number | null
 }
 
 export interface ProjectCreatePayload {
@@ -51,6 +97,11 @@ export interface ProjectCreatePayload {
   reference_text?: string | null
   auto_publish?: boolean
   publish_platforms?: string[]
+  // 新增（预览 + 预检 + 费用确认，默认 false，完全兼容旧代码）
+  enable_preview_approval?: boolean
+  preview_duration_sec?: number
+  require_asset_preflight?: boolean
+  require_cost_confirmation?: boolean
 }
 
 export interface Project extends ProjectCreatePayload {
@@ -60,6 +111,7 @@ export interface Project extends ProjectCreatePayload {
   current_stage: string | null
   script?: any
   output_path?: string | null
+  preview_output_path?: string | null
   error?: string | null
   created_at?: string
   updated_at?: string
@@ -188,6 +240,23 @@ export const projects = {
   },
   deleteProject(id: string) {
     return client.delete<{ deleted: string }>(`/projects/${id}`).then((r) => r.data)
+  },
+  // ────── 新增（预检 / 费用 / 预览 / 审批）──────
+  preflight(payload: ProjectCreatePayload) {
+    return client.post<PreflightResult>('/projects/preflight', payload).then((r) => r.data)
+  },
+  estimateCost(payload: ProjectCreatePayload) {
+    return client.post<CostEstimateResult>('/projects/cost', payload).then((r) => r.data)
+  },
+  // 增强型创建（可触发预检阻塞、预览-审批流）
+  createProjectWithChecks(payload: ProjectCreatePayload) {
+    return client.post<Project>('/projects/_create_with_checks', payload).then((r) => r.data)
+  },
+  runPreview(id: string) {
+    return client.post<Project>(`/projects/${id}/preview`).then((r) => r.data)
+  },
+  approve(id: string, body: ProjectApproveRequest) {
+    return client.post<Project>(`/projects/${id}/approve`, body).then((r) => r.data)
   },
 }
 

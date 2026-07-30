@@ -52,33 +52,53 @@ STAGES = [
 
 
 class Pipeline:
-    """单个 Project 的执行管线。"""
+    """单个 Project 的执行管线。
 
-    def __init__(self, project: Project, on_event: ProgressCallback | None = None) -> None:
+    新增 preview_mode 支持（不影响旧调用）：
+    - preview_mode=False（默认）→ 原逻辑：直接按 duration_sec 全量合成，结果写 output_path
+    - preview_mode=True  → 只合成 preview_duration_sec（默认 15s）的小样，结果写 preview_output_path，
+                            项目状态设为 PREVIEWED，等 approve 后再全量合成
+    """
+
+    def __init__(self, project: Project, on_event: ProgressCallback | None = None,
+                 *, preview_mode: bool = False) -> None:
         self.project = project
         self._on_event = on_event
         self._completed_weight = 0.0
+        # 预览模式：截断逻辑，预览只做前 N 秒
+        self.preview_mode = preview_mode
+        self.preview_duration = max(5, min(60, int(getattr(project, "preview_duration_sec", 15) or 15)))
 
     async def run(self) -> Project:
         p = self.project
+        # 预览模式时阶段前缀写 preview，方便 SSE 区分
+        stage_prefix = "preview:" if self.preview_mode else ""
+        # 预览模式的目标时长：取 min(原时长, preview_duration)
+        target_duration = float(p.duration_sec)
+        if self.preview_mode:
+            target_duration = min(target_duration, float(self.preview_duration))
         try:
-            self._emit("script", TaskStatus.RUNNING, 0.0, "开始生成台词")
-            p.status = TaskStatus.RUNNING
-            p.current_stage = "script"
+            self._emit(f"{stage_prefix}script", TaskStatus.RUNNING, 0.0, "开始生成台词")
+            p.status = TaskStatus.PREVIEWING if self.preview_mode else TaskStatus.RUNNING
+            p.current_stage = f"{stage_prefix}script"
 
-            # 1) 生成文案
+            # 1) 生成文案（预览模式：duration 缩小到 preview_duration，省钱）
             script = await script_service.generate(
                 ScriptRequest(
                     topic=p.topic,
                     style=p.style,
-                    duration_sec=p.duration_sec,
+                    duration_sec=int(target_duration),
                     language=p.language,
                     reference_text=p.reference_text,
                 ),
                 provider_name=p.llm_provider,
             )
-            p.script = script
-            self._advance("script", 1.0, f"生成 {len(script.shots)} 个分镜")
+            # 预览模式：不覆盖原 project.script（避免用户等 approve 后要重新生成），
+            # 而是临时保存；全量模式正常写 p.script
+            if not self.preview_mode:
+                p.script = script
+            preview_script = script
+            self._advance(f"{stage_prefix}script", 1.0, f"生成 {len(preview_script.shots)} 个分镜")
 
             # 2) 并行：每分镜 → 音频 + 背景选择
             storage = get_storage()
@@ -86,10 +106,10 @@ class Pipeline:
             audio_paths: list[Path] = []
             avatar_videos: list[Path] = []
 
-            self._emit("voice", TaskStatus.RUNNING, 0.0, "开始合成配音")
-            self._emit("avatar", TaskStatus.RUNNING, 0.0, "开始生成数字人口播")
+            self._emit(f"{stage_prefix}voice", TaskStatus.RUNNING, 0.0, "开始合成配音")
+            self._emit(f"{stage_prefix}avatar", TaskStatus.RUNNING, 0.0, "开始生成数字人口播")
 
-            shot_count = len(script.shots)
+            shot_count = len(preview_script.shots)
             from ..config import get_settings
             max_conc = get_settings().pipeline.max_concurrent_shots
 
@@ -114,7 +134,7 @@ class Pipeline:
                     async with lock:
                         completed_voice += 1
                         self._advance(
-                            "voice",
+                            f"{stage_prefix}voice",
                             completed_voice / shot_count,
                             f"配音 {completed_voice}/{shot_count}",
                         )
@@ -136,7 +156,7 @@ class Pipeline:
                         async with lock:
                             completed_avatar += 1
                             self._advance(
-                                "avatar",
+                                f"{stage_prefix}avatar",
                                 completed_avatar / shot_count,
                                 f"口播 {completed_avatar}/{shot_count}",
                             )
@@ -156,7 +176,7 @@ class Pipeline:
                         avatar_videos.append((idx, vid))
 
             # 启动并行
-            await asyncio.gather(*[process_shot(i, s) for i, s in enumerate(script.shots)])
+            await asyncio.gather(*[process_shot(i, s) for i, s in enumerate(preview_script.shots)])
 
             # 排序
             audio_paths.sort(key=lambda x: x[0])
@@ -165,21 +185,27 @@ class Pipeline:
             avatar_videos = [p for _, p in avatar_videos]
 
             # 3) 媒体
-            self._advance("media", 1.0, "媒体素材就绪")
+            self._advance(f"{stage_prefix}media", 1.0, "媒体素材就绪")
             bgm_final = media_service.pick_bgm(mode=p.bgm_mode, bgm_id=p.bgm_id)
 
             # 4) 合成
-            self._emit("video", TaskStatus.RUNNING, 0.0, "合成最终视频")
+            self._emit(f"{stage_prefix}video", TaskStatus.RUNNING, 0.0, "合成最终视频")
+            out_dir = storage.videos_dir if not self.preview_mode else storage.task_workspace(p.id)
+            out_name = f"{p.id}.mp4" if not self.preview_mode else f"{p.id}_preview.mp4"
             final = await video_service.compose(
                 shot_videos=avatar_videos,
                 bgm_path=bgm_final,
-                output_path=get_storage().videos_dir / f"{p.id}.mp4",
+                output_path=out_dir / out_name,
             )
-            p.output_path = str(final)
-            self._advance("video", 1.0, "合成完成")
+            if self.preview_mode:
+                # 预览不覆盖 output_path，写 preview_output_path
+                p.preview_output_path = str(final)
+            else:
+                p.output_path = str(final)
+            self._advance(f"{stage_prefix}video", 1.0, "合成完成")
 
-            # 5) 发布（可选）
-            if p.auto_publish and p.publish_platforms:
+            # 5) 发布（可选）—— 预览模式不发布
+            if (not self.preview_mode) and p.auto_publish and p.publish_platforms:
                 self._emit("publish", TaskStatus.RUNNING, 0.0, f"开始发布到 {len(p.publish_platforms)} 个平台")
                 from ..providers.base import registry as preg
                 from ..providers.publisher.social_auto_upload_provider import PLATFORM_MAP
@@ -191,8 +217,8 @@ class Pipeline:
                         publisher = preg.create("publisher", "dummy")
                         await publisher.publish(
                             video_path=final,
-                            title=script.title,
-                            tags=script.tags,
+                            title=(p.script.title if p.script else p.name),
+                            tags=(p.script.tags if p.script else []),
                         )
                     elif plat in PLATFORM_MAP:
                         publisher = preg.create_fresh(
@@ -202,8 +228,8 @@ class Pipeline:
                         try:
                             await publisher.publish(
                                 video_path=final,
-                                title=script.title,
-                                tags=script.tags,
+                                title=(p.script.title if p.script else p.name),
+                                tags=(p.script.tags if p.script else []),
                                 platform=plat,
                             )
                         except FileNotFoundError as e:
@@ -216,10 +242,16 @@ class Pipeline:
                         continue
                 self._advance("publish", 1.0, "发布完成")
 
-            p.status = TaskStatus.SUCCESS
-            p.progress = 1.0
-            p.current_stage = None
-            self._emit("done", TaskStatus.SUCCESS, 1.0, "全部完成")
+            # 预览模式成功 → 状态设为 PREVIEWED；全量模式 → SUCCESS
+            if self.preview_mode:
+                p.status = TaskStatus.PREVIEWED
+                p.current_stage = None
+                self._emit(f"{stage_prefix}done", TaskStatus.PREVIEWED, 1.0, f"预览小样生成完成，等待审批（{target_duration:.0f}s）")
+            else:
+                p.status = TaskStatus.SUCCESS
+                p.progress = 1.0
+                p.current_stage = None
+                self._emit("done", TaskStatus.SUCCESS, 1.0, "全部完成")
             return p
 
         except Exception as e:
